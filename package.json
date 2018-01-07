@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/DustinJSilk/reactive-gekko-strategy/issues"
   },
-  "homepage": "https://github.com/DustinJSilk/reactive-gekko-strategy#readme"
+  "homepage": "https://github.com/DustinJSilk/reactive-gekko-strategy#readme",
+  "dependencies": {
+    "toml": "^2.3.3"
+  }
 }

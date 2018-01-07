@@ -1,63 +1,83 @@
 const log = require('../core/log.js');
-const config = require('../core/util.js').getConfig();
-const strat = {};
+const fs = require('fs');
+const toml = require('toml');
 
-const Position = {
-  ABOVE: !!1,
-  BELOW: !!0
+console.log(__dirname);
+const InfoMessage = {
+  START: 'Running Reactive Strategy',
 };
 
-const Advice = {
-  LONG: 'long',
-  SHORT: 'short'
+const ErrorMessage = {
+  NO_STRATEGIES_FOUND: 'Noe strategies found',
 };
 
-strat.init = function() {
-  this.requiredHistory = config.tradingAdvisor.historySize;
+class ReativeStrategy {
+  constructor() {
+    log.info(InfoMessage.START);
 
-  this.addTalibIndicator('mystoch', 'stoch', this.settings);
+    this.runningStrategy = null;
 
-  this.position = null;
-
-  this.last = {
-    outSlowK: null,
-    outSlowD: null
-  };
-}
-
-strat.update = function(candle) {}
-
-strat.log = function() {}
-
-strat.check = function(candle) {
-  const {outSlowK, outSlowD} = this.talibIndicators.mystoch.result;
-
-  if (this.last.outSlowD && this.last.outSlowK) {
-    const lastVergence = this.vergence(this.last.outSlowD, this.last.outSlowK);
-    const currVergence = this.vergence(outSlowD, outSlowK);
-    const hasFlipped = lastVergence != currVergence;
-    const position = this.getPosition(outSlowD, outSlowK);
-
-    if (hasFlipped) {
-      if (position == Position.ABOVE) {
-        this.advice(Advice.SHORT);
-
-      } else if (position == Position.BELOW) {
-        this.advice(Advice.LONG);
-
-      }
-    }
+    this.getAvailableStrategies()
+        .then(data => this.availableStrategies = data)
+        .then(() => this.findMostProfitableStrategy());
   }
 
-  this.last = {outSlowK, outSlowD};
+  static getInstance() {
+    if (!this.instance_) {
+      this.instance_ = new ReativeStrategy();
+    }
+
+    return this.instance_;
+  }
+
+  init() {
+    if (!this.runningStrategy) return;
+
+    this.runningStrategy.init.call();
+  }
+
+  update() {
+    if (!this.runningStrategy) return;
+
+    this.runningStrategy.update.call();
+  }
+
+  log() {
+    if (!this.runningStrategy) return;
+
+    this.runningStrategy.log.call();
+  }
+
+  check() {
+    if (!this.runningStrategy) return;
+
+    this.runningStrategy.check.call();
+  }
+
+  findMostProfitableStrategy() {
+    const strategyName = 'stochastic';
+    const strategyFile = './' + strategyName;
+
+    this.setNewStrategy(require(strategyFile));
+  }
+
+  setNewStrategy(strategy) {
+    // fs.readfile(__dirname + )
+    console.log(__dirname);
+    // strategy.settings
+  }
+
+  getAvailableStrategies() {
+    return new Promise((resolve, reject) => {
+      fs.readdir(__dirname, (err, files) => {
+        if (err) reject(err);
+        if (!files || !files.length) reject(ErrorMessage.NO_STRATEGIES_FOUND);
+
+        // Only allow files with at least one character before the '.js'
+        resolve(files.filter(file => file.indexOf('.js') >= 1));
+      })
+    });
+  }
 }
 
-strat.getPosition = function(d, k) {
-  return d > k;
-}
-
-strat.vergence = function(d, k) {
-  return d > k;
-}
-
-module.exports = strat;
+module.exports = ReativeStrategy.getInstance();
